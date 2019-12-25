@@ -1,8 +1,9 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+var fs = require('fs')
 var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+var logger = require('morgan'); // 日志
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session)
 
@@ -18,7 +19,22 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-app.use(logger('dev'));
+const ENV = process.env.NODE_ENV
+if (ENV !== 'production') {
+  app.use(logger('dev'))
+} else {
+  // 线上环境
+  const logFileName = path.join(__dirname, 'logs', 'access.log')
+  const writeStream = fs.createWriteStream(logFileName, {
+    flags: 'a'
+  })
+  app.use(logger('combined', {
+    stream: writeStream
+  }));
+}
+
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
